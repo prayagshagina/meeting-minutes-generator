@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container app-container">
+    <header>
+      <h1 class="title">📝 {{ title }}</h1>
+      <p class="subtitle">Language detected: {{ language }}</p>
+    </header>
+
+    <section class="card">
+      <h2>Summary</h2>
+      <p>{{ summary }}</p>
+    </section>
+
+    <section class="card">
+      <h2>Key Points</h2>
+      {% if key_points %}
+        <ul>
+          {% for p in key_points %}<li>{{ p }}</li>{% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No key points identified.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Action Items</h2>
+      {% if action_items %}
+        <ul>
+          {% for a in action_items %}<li>{{ a }}</li>{% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No action items found.</p>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Deadlines</h2>
+      {% if deadlines %}
+        <ul>
+          {% for d in deadlines %}<li>{{ d }}</li>{% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">No deadlines recorded.</p>
+      {% endif %}
+    </section>
+
+    <section class="card transcript">
+      <h2>Transcript</h2>
+      <pre>{{ transcript }}</pre>
+    </section>
+
+    <div class="download-section">
+      <h3>Download</h3>
+      {% if pdf_file %}<a class="btn" href="/export?file={{ pdf_file }}">📄 PDF</a>{% endif %}
+      {% if docx_file %}<a class="btn" href="/export?file={{ docx_file }}">📝 Word</a>{% endif %}
+      {% if txt_file %}<a class="btn" href="/export?file={{ txt_file }}">📘 Text</a>{% endif %}
+      {% if not (pdf_file or docx_file or txt_file) %}
+        <p class="empty">No exports available.</p>
+      {% endif %}
+    </div>
+
+    <div class="back">
+      <a class="btn back-btn" href="/">← Upload another file</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meeting Minutes Generator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* Inline styles for progress bar (or move to style.css) */
+    .progress-container {
+      display: none;
+      width: 100%;
+      background-color: #eee;
+      border-radius: 10px;
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 20px;
+      width: 0%;
+      background-color: #4caf50;
+      text-align: center;
+      color: white;
+      border-radius: 10px;
+      transition: width 0.4s ease;
+    }
+
+    .progress-text {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #333;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container app-container">
+    <header>
+      <h1 class="title">🎙️ Meeting Minutes Generator</h1>
+      <p class="subtitle">Upload an audio file and get structured meeting minutes.</p>
+    </header>
+
+    <main>
+      <form
+        id="uploadForm"
+        action="/upload"
+        method="post"
+        enctype="multipart/form-data"
+        class="upload-form"
+      >
+        <label class="label" for="audio">Choose audio file</label>
+        <input id="audio" name="audio" type="file" accept="audio/*" required />
+
+        <div class="hint">Supported: mp3, wav, m4a, ogg, flac, aac</div>
+
+        <button type="submit" class="btn">Generate Minutes</button>
+
+        <!-- Progress Bar -->
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText"></div>
+      </form>
+    </main>
+
+    <footer></footer>
+  </div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+
+    form.addEventListener("submit", function () {
+      // Show progress bar
+      progressContainer.style.display = "block";
+      progressText.textContent = "Processing... please wait.";
+
+      // Animate fake progress while backend works
+      let width = 0;
+      const interval = setInterval(() => {
+        if (width >= 90) return; // Keep below 100% until page reload
+        width += 1;
+        progressBar.style.width = width + "%";
+      }, 200);
+
+      // When the page reloads to show the result, interval auto stops
+    });
+  </script>
+</body>
+</html>
