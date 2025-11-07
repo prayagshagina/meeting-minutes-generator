@@ -1,99 +1,41 @@
-import os
-import uuid
-import json
-from flask import Flask, request, render_template, jsonify, send_file, abort
-from werkzeug.utils import secure_filename
-from utils.transcribe import transcribe_file
-from utils.cleanup import clean_transcript
-from utils.summarize import summarize_transcript, build_structured_minutes
-from utils.export_utils import export_pdf, export_docx, export_txt
+AI Meeting Minutes Generator
+(Voice → Text → Summary → Export)
 
-UPLOAD_FOLDER = "uploads"
-GENERATED_FOLDER = "generated"
-ALLOWED_EXT = {"wav", "mp3", "m4a", "flac"}
+A Flask-based AI/ML web application that automatically converts meeting audio recordings into well-structured meeting minutes containing summaries, key points, decisions, action items, and deadlines.
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(GENERATED_FOLDER, exist_ok=True)
+📋 Project Overview
 
-app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["GENERATED_FOLDER"] = GENERATED_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200MB
+The AI Meeting Minutes Generator automates the process of creating meeting minutes by leveraging advanced speech recognition and natural language processing (NLP) technologies.
+It allows users to upload an audio file, automatically transcribes it using OpenAI Whisper, cleans the transcript using NLTK, and summarizes it with OpenAI GPT-3.5 / GPT-4 API into clear, structured notes.
 
-# in-memory store for results (simple; for production use DB)
-RESULT_STORE = {}
+Finally, the summarized minutes can be exported in .txt, .docx, or .pdf formats for professional reporting.
 
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".",1)[1].lower() in ALLOWED_EXT
+⚙️ Workflow
 
-@app.route("/")
-def index():
-    return render_template("index.html")
+Audio Upload: User uploads a meeting recording through the Flask interface.
 
-@app.route("/upload", methods=["POST"])
-def upload():
-    if "file" not in request.files:
-        return render_template("index.html", error="No file uploaded.")
-    file = request.files["file"]
-    style = request.form.get("style", "Concise")
-    title = request.form.get("title", "")
-    date_str = request.form.get("date", "")
-    attendees = request.form.get("attendees", "")
+Speech-to-Text Conversion: Audio is transcribed using OpenAI Whisper.
 
-    if file.filename == "":
-        return render_template("index.html", error="No file selected.")
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        uid = str(uuid.uuid4())
-        saved_path = os.path.join(app.config["UPLOAD_FOLDER"], f"{uid}_{filename}")
-        file.save(saved_path)
+Text Cleaning: The transcript is processed using NLTK to remove filler words, repetitions, and noise.
 
-        raw_transcript = transcribe_file(saved_path)
-        cleaned = clean_transcript(raw_transcript)
-        summary_text = summarize_transcript(cleaned, style=style)
-        minutes = build_structured_minutes(cleaned, summary_text,
-                                           title=title, date=date_str, attendees=attendees)
+Summarization: The cleaned text is summarized using OpenAI GPT-3.5 / GPT-4 API into structured meeting notes.
 
-        RESULT_STORE[uid] = {
-            "transcript": raw_transcript,
-            "cleaned": cleaned,
-            "summary": summary_text,
-            "minutes": minutes
-        }
+Display Results: The final summary is displayed on an HTML results page.
 
-        return render_template("index.html", minutes=minutes, uid=uid)
-    return render_template("index.html", error="Invalid file type.")
+Export: The summary and key points are exported into .txt, .docx, and .pdf using python-docx and reportlab libraries.
 
+🧩 Features
 
-@app.route("/export/pdf", methods=["GET"])
-def export_pdf_route():
-    uid = request.args.get("id")
-    if not uid or uid not in RESULT_STORE:
-        return abort(404, "Result not found")
-    minutes = RESULT_STORE[uid]["minutes"]
-    out_path = os.path.join(app.config["GENERATED_FOLDER"], f"{uid}.pdf")
-    export_pdf(minutes, out_path)
-    return send_file(out_path, as_attachment=True, download_name=f"minutes_{uid}.pdf")
+🎙️ Upload audio in .wav, .mp3, or .m4a formats
 
-@app.route("/export/docx", methods=["GET"])
-def export_docx_route():
-    uid = request.args.get("id")
-    if not uid or uid not in RESULT_STORE:
-        return abort(404, "Result not found")
-    minutes = RESULT_STORE[uid]["minutes"]
-    out_path = os.path.join(app.config["GENERATED_FOLDER"], f"{uid}.docx")
-    export_docx(minutes, out_path)
-    return send_file(out_path, as_attachment=True, download_name=f"minutes_{uid}.docx")
+🗣️ High-accuracy transcription with OpenAI Whisper
 
-@app.route("/export/txt", methods=["GET"])
-def export_txt_route():
-    uid = request.args.get("id")
-    if not uid or uid not in RESULT_STORE:
-        return abort(404, "Result not found")
-    minutes = RESULT_STORE[uid]["minutes"]
-    out_path = os.path.join(app.config["GENERATED_FOLDER"], f"{uid}.txt")
-    export_txt(minutes, out_path)
-    return send_file(out_path, as_attachment=True, download_name=f"minutes_{uid}.txt")
+🧹 Text cleaning using NLTK and regex
 
-if __name__ == "__main__":
-    app.run(debug=True)
+🤖 AI-powered summarization using OpenAI GPT-3.5 / GPT-4
+
+📑 Structured outputs — Summary, Key Points, Decisions, and Action Items
+
+💾 Export meeting minutes to TXT, DOCX, or PDF
+
+🌐 Simple, clean Flask-based web interface
